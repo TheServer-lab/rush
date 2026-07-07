@@ -1,0 +1,2 @@
+windres rush.rc -O coff -o rush_res.o
+gcc -Wall -Wextra -o rush.exe main.c interp.c commands.c vars.c net.c users.c sha256.c rush_res.o -lws2_32
