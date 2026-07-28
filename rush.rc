@@ -1,0 +1,9 @@
+// Windows resource script - embeds rush.ico as the executable's icon.
+// Place rush.ico in this same directory, then build with:
+//
+//   windres rush.rc -O coff -o rush_res.o
+//   gcc -Wall -Wextra -o rush.exe main.c interp.c commands.c vars.c net.c users.c sha256.c rush_res.o -lws2_32
+//
+// (windres ships with MinGW - same toolchain you already have gcc from.)
+
+IDI_ICON1 ICON "rush.ico"

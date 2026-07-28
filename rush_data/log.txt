@@ -1,0 +1,208 @@
+anonymous goin C:\Users\RICK\Downloads\rush\Test 2026-07-06T19:46:37
+anonymous help 2026-07-06T19:46:41
+anonymous where 2026-07-06T19:47:26
+anonymous regi rick admin 2026-07-06T19:48:10
+anonymous whoami 2026-07-06T19:48:52
+anonymous auth config package winget 2026-07-06T19:51:26
+anonymous auth config admin 2026-07-06T19:51:56
+anonymous auth config auth admin 2026-07-06T19:52:55
+anonymous auth config admin auth 2026-07-06T19:53:11
+anonymous auth config auth admin 2026-07-06T19:55:31
+anonymous auth admin config 2026-07-06T19:56:05
+anonymous login 2026-07-06T19:56:16
+anonymous rick 2026-07-06T19:56:20
+anonymous 112345678 2026-07-06T19:56:24
+anonymous login rick 2026-07-06T19:56:50
+rick login success 2026-07-06T19:56:55
+rick auth config package winget 2026-07-06T19:57:31
+rick auth config admin 2026-07-06T19:57:48
+rick auth config auth admin 2026-07-06T19:58:20
+rick auth default admin 2026-07-06T19:58:46
+rick auth config auth admin 2026-07-06T20:01:25
+rick auth config = admin 2026-07-06T20:02:18
+rick auth config package winget 2026-07-06T20:02:31
+rick auth admin config package winget 2026-07-06T20:02:48
+rick auth admin package config winget 2026-07-06T20:07:09
+rick auth admin package = winget 2026-07-06T20:07:26
+rick about 2026-07-06T20:12:07
+rick config package = winget 2026-07-06T20:13:31
+rick auth package = winget 2026-07-06T20:16:05
+rick bounce https://google.com 5 2026-07-06T20:19:02
+rick mkfl text.txt 2026-07-06T20:20:04
+rick x = 11 2026-07-06T20:32:07
+rick show x 2026-07-06T20:32:15
+anonymous help 2026-07-07T03:29:28
+anonymous login rick 2026-07-07T03:30:45
+rick login success 2026-07-07T03:30:51
+rick auth package install doscript 2026-07-07T03:31:19
+rick package config = winget 2026-07-07T03:31:42
+rick auth package install doscript 2026-07-07T03:31:46
+rick calc 3 * 3 ~ bounce gttps://google.com 2026-07-07T03:35:25
+rick calc 3 * 3 ~ bounce https://google.com 2026-07-07T03:35:38
+rick x = 1 2026-07-07T03:41:11
+rick show x 2026-07-07T03:41:16
+rick dump x 2026-07-07T03:41:21
+rick show x 2026-07-07T03:41:24
+anonymous show "hi" 2026-07-07T03:47:55
+anonymous help 2026-07-07T03:48:11
+anonymous goin C:\Users\RICK\Downloads\rush\Test 2026-07-07T03:49:09
+anonymous calc 3 * 3 ~ bounce https://google.com 2026-07-07T03:51:24
+anonymous show "hello there!" 2026-07-07T04:03:24
+anonymous show "hello there!" 2026-07-07T04:03:24
+anonymous show "hello there!" 2026-07-07T04:03:24
+anonymous mkfl test.txt 2026-07-07T04:05:12
+anonymous open text.txt 2026-07-07T04:05:24
+anonymous open text.txt -default 2026-07-07T04:09:20
+anonymous me 2026-07-07T07:52:44
+anonymous where 2026-07-07T15:23:50
+anonymous goin home 2026-07-07T15:23:57
+anonymous where 2026-07-07T15:24:00
+anonymous x = me 2026-07-07T15:27:47
+anonymous me 2026-07-07T15:27:47
+anonymous show x 2026-07-07T15:27:47
+anonymous regi test member 2026-07-07T15:29:10
+anonymous login rick 2026-07-07T15:29:27
+anonymous failed login attempt 2026-07-07T15:29:31
+anonymous login rick 2026-07-07T15:29:44
+rick login success 2026-07-07T15:29:49
+rick demo test 2026-07-07T15:30:00
+rick promoted test to guest 2026-07-07T15:30:00
+rick promo test 2026-07-07T15:30:09
+rick promo test admin 2026-07-07T15:30:19
+rick promoted test to admin 2026-07-07T15:30:19
+rick demo test 2026-07-07T15:30:29
+rick promoted test to member 2026-07-07T15:30:29
+rick user = me 2026-07-07T15:30:55
+rick me 2026-07-07T15:30:55
+rick show user 2026-07-07T15:31:10
+rick saves 2026-07-07T15:31:19
+rick saves 1 2026-07-07T15:31:24
+anonymous login rick 2026-07-07T15:32:37
+rick login success 2026-07-07T15:32:42
+rick loads 1 2026-07-07T15:32:58
+anonymous list users 2026-07-07T15:43:55
+anonymous list user 2026-07-07T15:44:03
+anonymous login rick 2026-07-07T16:11:00
+rick login success 2026-07-07T16:11:05
+rick loads 1 2026-07-07T16:11:27
+rick auth config package = winget 2026-07-07T16:12:11
+rick auth package config = winget 2026-07-07T16:12:34
+rick saves 1 2026-07-07T16:12:44
+anonymous help 2026-07-07T16:14:35
+anonymous show "hi" 2026-07-08T00:06:15
+anonymous clear 2026-07-08T00:06:19
+anonymous hi 2026-07-08T02:00:59
+anonymous wipe 2026-07-08T02:01:05
+anonymous task 2026-07-08T02:18:37
+anonymous task C:\Users\RICK\Downloads\rush\Test\new.rsh 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous show "hi" 2026-07-08T02:25:30
+anonymous view C:\Users\RICK\Desktop\rotate.bmp 2026-07-08T06:11:12
+anonymous view C:\Users\RICK\Desktop\rotate.bmp 2026-07-08T06:28:12
+anonymous view C:\Users\RICK\Desktop\rotate.bmp -default 2026-07-08T06:33:25
+anonymous view C:\Users\RICK\Desktop\rotate.bmp -default 2026-07-08T06:40:11
+anonymous netch 2026-07-08T06:40:47
+anonymous netch https://google.com 2026-07-08T06:41:19
+anonymous lib = pip 2026-07-08T06:41:46
+anonymous show lib 2026-07-08T06:42:37
+anonymous dump lib 2026-07-08T06:42:49
+anonymous lig config = pip 2026-07-08T06:43:04
+anonymous lib config = pip 2026-07-08T06:43:12
+anonymous lib install flask 2026-07-08T06:43:29
+anonymous moitor https://google.com 2026-07-08T06:44:58
+anonymous monitor https://google.com 2026-07-08T06:45:09
+anonymous lib install req py 2026-07-08T06:47:33
+anonymous login test 2026-07-08T10:29:14
+anonymous failed login attempt 2026-07-08T10:29:20
+anonymous login test 2026-07-08T10:29:23
+test login success 2026-07-08T10:29:24
+test ali show 1 2026-07-08T10:29:44
+test ali 1 show 2026-07-08T10:29:56
+test ali 1 = show 2026-07-08T10:30:05
+test logout 2026-07-08T10:30:10
+anonymous login rick 2026-07-08T10:30:22
+rick login success 2026-07-08T10:30:26
+rick del ali test 2026-07-08T10:30:41
+rick auth del ali test 2026-07-08T10:31:04
+rick del test ali 2026-07-08T10:31:39
+rick cali test 2026-07-08T10:33:38
+rick cleared aliases for test 2026-07-08T10:33:38
+anonymous login rick 2026-07-08T12:41:16
+rick login success 2026-07-08T12:41:20
+rick cali test 2026-07-08T12:41:29
+rick auth cali test 2026-07-08T12:41:47
+anonymous login rick 2026-07-08T16:20:19
+rick login success 2026-07-08T16:20:23
+rick config launch btd6 = C:\Users\RICK\Downloads\Bloons.TD.6.v55.2.10954\game\BloonsTD6.exe 2026-07-08T16:21:16
+rick launch btd6 2026-07-08T16:21:51
+rick pros list 2026-07-08T16:24:06
+rick list pros 2026-07-08T16:24:15
+rick kill pros 1 2026-07-08T16:24:40
+anonymous pause 2026-07-08T16:28:57
+anonymous sdown 2026-07-08T16:54:03
+anonymous sdown -force 2026-07-08T16:54:20
+anonymous config launch mc = C:\Users\RICK\AppData\Roaming\.minecraft\TLauncher.exe 2026-07-08T19:57:04
+anonymous ali help 2026-07-08T19:57:46
+anonymous ali mc = launch mc 2026-07-08T19:58:14
+anonymous mc 2026-07-08T19:58:23
+anonymous launch mc 2026-07-08T19:58:23
+anonymous mc 2026-07-08T23:06:38
+anonymous launch mc 2026-07-08T23:06:38
+anonymous help 2026-07-08T23:07:05
+anonymous list lab 2026-07-09T04:17:58
+anonymous list dsk 2026-07-09T04:19:28
+anonymous list dsk 2026-07-09T04:22:18
+anonymous list dsk 2026-07-09T04:24:21
+anonymous help 2026-07-09T04:25:20
+anonymous list part 2026-07-09T04:26:46
+anonymous sdown -force 2026-07-09T04:32:33
+anonymous wipe 2026-07-29T04:29:58
+anonymous help 2026-07-29T04:30:47

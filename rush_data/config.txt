@@ -1,0 +1,3 @@
+default_tier=member
+package_backend=
+lib_backend=pip
