@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 #include "rush.h"
 #include "commands.h"
 #include "net.h"
@@ -236,9 +237,45 @@ ExecResult cmd_about(char **args, int argc, Value *piped) {
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
     struct stat st;
     if (stat(path, &st) != 0) { rush_error("file %s not found", path); free(path); r.ok = 1; return r; }
+    int is_dir = S_ISDIR(st.st_mode);
     printf("name: %s\n", path);
-    printf("type: %s\n", S_ISDIR(st.st_mode) ? "folder" : "file");
+    printf("type: %s\n", is_dir ? "folder" : "file");
     printf("size: %ld bytes\n", (long)st.st_size);
+
+    char timebuf[64];
+    struct tm *mt = localtime(&st.st_mtime);
+    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", mt);
+    printf("modified: %s\n", timebuf);
+
+    if (is_dir) {
+        DIR *d = opendir(path);
+        int items = 0;
+        if (d) {
+            struct dirent *ent;
+            while ((ent = readdir(d)) != NULL) {
+                if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
+                items++;
+            }
+            closedir(d);
+            printf("items: %d\n", items);
+        }
+    } else {
+        /* best-effort line count, treating the file as text; a binary
+         * file just gets a (possibly meaningless) count, same spirit
+         * as 'open' drawing the text/binary line elsewhere */
+        FILE *f = fopen(path, "rb");
+        if (f) {
+            long lines = 0;
+            int c, last = '\n';
+            while ((c = fgetc(f)) != EOF) { if (c == '\n') lines++; last = c; }
+            if (last != '\n' && last != EOF) lines++; /* count a final unterminated line */
+            fclose(f);
+            printf("lines: %ld\n", lines);
+        }
+#ifndef _WIN32
+        printf("permissions: %o\n", st.st_mode & 0777);
+#endif
+    }
     free(path);
     return r;
 }
@@ -270,59 +307,93 @@ ExecResult cmd_del(char **args, int argc, TokenList *tl, Value *piped) {
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
     int every = has_flag(tl, "every");
     int force = has_flag(tl, "force");
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
+    if (test) {
+        if (!silent) printf("would delete %s%s\n", path, every ? " (recursively)" : "");
+        free(path);
+        return r;
+    }
     int rc;
     if (every) rc = remove_recursive(path);
     else rc = remove(path) == 0 ? 0 : (rmdir(path) == 0 ? 0 : -1);
     if (rc != 0 && !force) { rush_error("could not delete %s", path); r.ok = 1; }
+    else if (rc == 0 && !silent) printf("deleted %s\n", path);
     free(path);
     return r;
 }
 
 /* ---------- mkf / mkfl ---------- */
-ExecResult cmd_mkf(char **args, int argc, Value *piped) {
+ExecResult cmd_mkf(char **args, int argc, TokenList *tl, Value *piped) {
     (void)piped;
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
     if (argc < 2) { rush_error("mkf expects a folder name"); r.ok = 1; return r; }
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    if (test) {
+        if (!silent) printf("would create folder %s\n", path);
+        free(path);
+        return r;
+    }
 #ifdef _WIN32
     if (mkdir(path) != 0) { rush_error("could not create folder %s", path); r.ok = 1; }
 #else
     if (mkdir(path, 0755) != 0) { rush_error("could not create folder %s", path); r.ok = 1; }
 #endif
+    else if (!silent) printf("created folder %s\n", path);
     free(path);
     return r;
 }
 
-ExecResult cmd_mkfl(char **args, int argc, Value *piped) {
+ExecResult cmd_mkfl(char **args, int argc, TokenList *tl, Value *piped) {
     (void)piped;
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
     if (argc < 2) { rush_error("mkfl expects a file name"); r.ok = 1; return r; }
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    if (test) {
+        if (!silent) printf("would create file %s\n", path);
+        free(path);
+        return r;
+    }
     FILE *f = fopen(path, "w");
     if (!f) { rush_error("could not create file %s", path); r.ok = 1; }
-    else fclose(f);
+    else { fclose(f); if (!silent) printf("created file %s\n", path); }
     free(path);
     return r;
 }
 
 /* ---------- write / owrite ---------- */
-static ExecResult do_write(char **args, int argc, const char *mode) {
+static ExecResult do_write(char **args, int argc, TokenList *tl, const char *mode) {
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
     if (argc < 3) { rush_error("write expects a file and text"); r.ok = 1; return r; }
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
     int err;
     Value v = resolve_operand(args[2], &err);
     if (err) { free(path); r.ok = 1; return r; }
     char *text = value_to_display(&v);
+    if (test) {
+        if (!silent) printf("would %s \"%s\" to %s\n", mode[0] == 'a' ? "append" : "write", text, path);
+        free(path); free(text); value_free(&v);
+        return r;
+    }
     FILE *f = fopen(path, mode);
     if (!f) { rush_error("could not write to %s", path); r.ok = 1; }
-    else { fprintf(f, "%s\n", text); fclose(f); }
+    else {
+        fprintf(f, "%s\n", text);
+        fclose(f);
+        if (!silent) printf("%s %s\n", mode[0] == 'a' ? "appended to" : "wrote", path);
+    }
     free(path); free(text); value_free(&v);
     return r;
 }
 
-ExecResult cmd_write(char **args, int argc, Value *piped) { (void)piped; return do_write(args, argc, "a"); }
-ExecResult cmd_owrite(char **args, int argc, Value *piped) { (void)piped; return do_write(args, argc, "w"); }
+ExecResult cmd_write(char **args, int argc, TokenList *tl, Value *piped) { (void)piped; return do_write(args, argc, tl, "a"); }
+ExecResult cmd_owrite(char **args, int argc, TokenList *tl, Value *piped) { (void)piped; return do_write(args, argc, tl, "w"); }
 
 /* ---------- time ---------- */
 ExecResult cmd_time(char **args, int argc, Value *piped) {
@@ -364,14 +435,196 @@ ExecResult cmd_find(char **args, int argc, TokenList *tl, Value *piped) {
 }
 
 /* ---------- rname ---------- */
-ExecResult cmd_rname(char **args, int argc, Value *piped) {
+ExecResult cmd_rname(char **args, int argc, TokenList *tl, Value *piped) {
     (void)piped;
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
     if (argc < 3) { rush_error("rname expects old and new names"); r.ok = 1; return r; }
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
     char *from = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
     char *to   = is_quoted(args[2]) ? strip_quotes(args[2]) : strdup(args[2]);
+    if (test) {
+        if (!silent) printf("would rename %s to %s\n", from, to);
+        free(from); free(to);
+        return r;
+    }
     if (rename(from, to) != 0) { rush_error("could not rename %s", from); r.ok = 1; }
+    else if (!silent) printf("renamed %s to %s\n", from, to);
     free(from); free(to);
+    return r;
+}
+
+/* ---------- cpy / mov: copy or move a file (or, with -every, a whole
+ * folder tree) ---------- */
+static int copy_file_contents(const char *from, const char *to) {
+    FILE *in = fopen(from, "rb");
+    if (!in) return -1;
+    FILE *out = fopen(to, "wb");
+    if (!out) { fclose(in); return -1; }
+    char buf[8192];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0) fwrite(buf, 1, n, out);
+    fclose(in);
+    fclose(out);
+    return 0;
+}
+
+static int copy_recursive(const char *from, const char *to) {
+    struct stat st;
+    if (stat(from, &st) != 0) return -1;
+    if (S_ISDIR(st.st_mode)) {
+#ifdef _WIN32
+        if (mkdir(to) != 0 && errno != EEXIST) return -1;
+#else
+        if (mkdir(to, 0755) != 0 && errno != EEXIST) return -1;
+#endif
+        DIR *d = opendir(from);
+        if (!d) return -1;
+        struct dirent *ent;
+        int rc = 0;
+        while ((ent = readdir(d)) != NULL) {
+            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) continue;
+            char src_full[RUSH_MAX_LINE], dst_full[RUSH_MAX_LINE];
+            snprintf(src_full, sizeof(src_full), "%s/%s", from, ent->d_name);
+            snprintf(dst_full, sizeof(dst_full), "%s/%s", to, ent->d_name);
+            if (copy_recursive(src_full, dst_full) != 0) rc = -1;
+        }
+        closedir(d);
+        return rc;
+    }
+    return copy_file_contents(from, to);
+}
+
+ExecResult cmd_cpy(char **args, int argc, TokenList *tl, Value *piped) {
+    (void)piped;
+    ExecResult r = {0, {VAL_INT,0,NULL}, 0};
+    if (argc < 3) { rush_error("cpy expects a source and destination"); r.ok = 1; return r; }
+    int every = has_flag(tl, "every");
+    int force = has_flag(tl, "force");
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
+    char *from = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    char *to   = is_quoted(args[2]) ? strip_quotes(args[2]) : strdup(args[2]);
+    struct stat dst_st;
+    if (!force && stat(to, &dst_st) == 0) {
+        rush_error("%s already exists, use -force to overwrite", to);
+        free(from); free(to); r.ok = 1; return r;
+    }
+    if (test) {
+        if (!silent) printf("would copy %s to %s%s\n", from, to, every ? " (recursively)" : "");
+        free(from); free(to);
+        return r;
+    }
+    struct stat src_st;
+    int rc;
+    if (stat(from, &src_st) == 0 && S_ISDIR(src_st.st_mode)) {
+        if (!every) { rush_error("%s is a folder, use -every to copy it", from); free(from); free(to); r.ok = 1; return r; }
+        rc = copy_recursive(from, to);
+    } else {
+        rc = copy_file_contents(from, to);
+    }
+    if (rc != 0) { rush_error("could not copy %s", from); r.ok = 1; }
+    else if (!silent) printf("copied %s to %s\n", from, to);
+    free(from); free(to);
+    return r;
+}
+
+ExecResult cmd_mov(char **args, int argc, TokenList *tl, Value *piped) {
+    (void)piped;
+    ExecResult r = {0, {VAL_INT,0,NULL}, 0};
+    if (argc < 3) { rush_error("mov expects a source and destination"); r.ok = 1; return r; }
+    int every = has_flag(tl, "every");
+    int force = has_flag(tl, "force");
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
+    char *from = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    char *to   = is_quoted(args[2]) ? strip_quotes(args[2]) : strdup(args[2]);
+    struct stat dst_st;
+    if (!force && stat(to, &dst_st) == 0) {
+        rush_error("%s already exists, use -force to overwrite", to);
+        free(from); free(to); r.ok = 1; return r;
+    }
+    if (test) {
+        if (!silent) printf("would move %s to %s\n", from, to);
+        free(from); free(to);
+        return r;
+    }
+    /* try a plain rename first (fast, same filesystem); fall back to
+     * copy + delete if that fails (e.g. crossing filesystems/drives) */
+    int rc = rename(from, to);
+    if (rc != 0) {
+        struct stat src_st;
+        if (stat(from, &src_st) == 0 && S_ISDIR(src_st.st_mode)) {
+            if (!every) { rush_error("%s is a folder, use -every to move it", from); free(from); free(to); r.ok = 1; return r; }
+            rc = copy_recursive(from, to);
+            if (rc == 0) rc = remove_recursive(from);
+        } else {
+            rc = copy_file_contents(from, to);
+            if (rc == 0) rc = remove(from);
+        }
+    }
+    if (rc != 0) { rush_error("could not move %s", from); r.ok = 1; }
+    else if (!silent) printf("moved %s to %s\n", from, to);
+    free(from); free(to);
+    return r;
+}
+
+/* ---------- appn: append the whole contents of one file onto another
+ * (distinct from 'write', which appends a single literal/variable
+ * value rather than an existing file's contents) ---------- */
+ExecResult cmd_appn(char **args, int argc, TokenList *tl, Value *piped) {
+    (void)piped;
+    ExecResult r = {0, {VAL_INT,0,NULL}, 0};
+    if (argc < 3) { rush_error("appn expects a source file and a destination file"); r.ok = 1; return r; }
+    int silent = has_flag(tl, "silent");
+    int test = has_flag(tl, "test");
+    char *from = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    char *to   = is_quoted(args[2]) ? strip_quotes(args[2]) : strdup(args[2]);
+    if (test) {
+        if (!silent) printf("would append %s onto %s\n", from, to);
+        free(from); free(to);
+        return r;
+    }
+    FILE *in = fopen(from, "rb");
+    if (!in) { rush_error("file %s not found", from); free(from); free(to); r.ok = 1; return r; }
+    FILE *out = fopen(to, "ab");
+    if (!out) { rush_error("could not write to %s", to); fclose(in); free(from); free(to); r.ok = 1; return r; }
+    char buf[8192];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), in)) > 0) fwrite(buf, 1, n, out);
+    fclose(in); fclose(out);
+    if (!silent) printf("appended %s onto %s\n", from, to);
+    free(from); free(to);
+    return r;
+}
+
+/* ---------- lookfor: search for a term within a single file's lines
+ * (rush's grep equivalent - 'find' locates files by name, 'lookfor'
+ * searches file *contents*) ---------- */
+ExecResult cmd_lookfor(char **args, int argc, TokenList *tl, Value *piped) {
+    (void)piped;
+    ExecResult r = {0, {VAL_INT,0,NULL}, 0};
+    if (argc < 3) { rush_error("lookfor expects a search term and a file"); r.ok = 1; return r; }
+    int info = has_flag(tl, "info"); /* show line numbers */
+    char *needle = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+    char *path = is_quoted(args[2]) ? strip_quotes(args[2]) : strdup(args[2]);
+    FILE *f = fopen(path, "r");
+    if (!f) { rush_error("file %s not found", path); free(needle); free(path); r.ok = 1; return r; }
+    char line[RUSH_MAX_LINE];
+    int lineno = 0;
+    int matches = 0;
+    while (fgets(line, sizeof(line), f)) {
+        lineno++;
+        line[strcspn(line, "\n")] = '\0';
+        if (strstr(line, needle)) {
+            matches++;
+            if (info) printf("%d: %s\n", lineno, line);
+            else printf("%s\n", line);
+        }
+    }
+    fclose(f);
+    if (matches == 0) printf("no matches for \"%s\" in %s\n", needle, path);
+    free(needle); free(path);
     return r;
 }
 
@@ -828,10 +1081,93 @@ ExecResult cmd_pack(char **args, int argc, TokenList *tl) {
 }
 
 /* ---------- help ---------- */
-ExecResult cmd_help(void) {
+typedef struct {
+    const char *name;
+    const char *usage;  /* one-line syntax, shown as the first line of detailed help */
+    const char *detail; /* one or more sentences of extra explanation */
+} HelpEntry;
+
+static const HelpEntry help_table[] = {
+    { "show",    "show <value>",              "Prints a value: a variable, a quoted string (with {name} interpolation), or an int literal." },
+    { "calc",    "calc <a> <op> <b>",          "Integer arithmetic with + - * /. Mixing int and string is an error. Capture the result with a = calc ...." },
+    { "where",   "where",                     "Prints the current directory." },
+    { "goin",    "goin <path>",                "Changes the current directory." },
+    { "list",    "list [path]",                "Lists directory contents. See also: list user, list sess, list pros, list dsk, list lab, list part <disk#>." },
+    { "read",    "read <file>",                "Prints a file's contents to the screen." },
+    { "about",   "about <target>",             "Shows name, type, size, and last-modified time; folders also get an item count, files get a line count and (non-Windows) permissions." },
+    { "del",     "del <target> [-force] [-every] [-test] [-silent]", "Deletes a file, or a folder tree with -every. -test previews without deleting; -silent suppresses the confirmation line." },
+    { "mkf",     "mkf <name> [-test] [-silent]", "Creates a folder." },
+    { "mkfl",    "mkfl <name> [-test] [-silent]", "Creates an empty file." },
+    { "write",   "write <file> <text> [-test] [-silent]", "Appends a single literal or variable value to a file. See appn to append one whole file onto another." },
+    { "owrite",  "owrite <file> <text> [-test] [-silent]", "Overwrites a file's contents with a single literal or variable value." },
+    { "time",    "time",                       "Prints the current time (HH:MM:SS)." },
+    { "find",    "find <term> [-every]",       "Searches for files by name in the current directory (or recursively with -every). See lookfor to search file contents instead." },
+    { "lookfor", "lookfor <term> <file> [-info]", "Searches inside a file's contents and prints matching lines. -info prefixes each match with its line number. rush's equivalent of grep." },
+    { "rname",   "rname <old> <new> [-test] [-silent]", "Renames a file or folder in place." },
+    { "cpy",     "cpy <src> <dst> [-every] [-force] [-test] [-silent]", "Copies a file. Copying a folder requires -every. Refuses to overwrite an existing destination unless -force is given." },
+    { "mov",     "mov <src> <dst> [-every] [-force] [-test] [-silent]", "Moves/renames a file or folder, falling back to copy+delete if a plain rename fails (e.g. across drives). Moving a folder requires -every." },
+    { "appn",    "appn <src> <dst> [-test] [-silent]", "Appends the entire contents of <src> onto the end of <dst>. See write to append a single value instead of a whole file." },
+    { "open",    "open <file> [-default]",     "Opens a small interactive line editor (list, a <text>, d <n>, r <n> <text>, save, quit). -default hands off to the OS's own program instead." },
+    { "edit",    "edit <file> <line> <text>",   "Replaces one line in a file directly, no interactive mode." },
+    { "view",    "view <image.bmp/.ppm> [-default]", "Displays an uncompressed BMP or binary PPM image in the terminal using ANSI truecolor. -default hands off to the OS's own viewer." },
+    { "dload",   "dload <url> [output]",        "Downloads a file via curl." },
+    { "extr",    "extr <archive> [dest]",        "Extracts an archive via tar." },
+    { "wait",    "wait <seconds>",               "Pauses execution for the given number of seconds." },
+    { "bounce",  "bounce <url> [count]",          "Tests reachability with a single TCP connection (not a full HTTP request, not ICMP). An optional count repeats the attempt that many times." },
+    { "pack",    "pack <out.zip> <files/folders...>", "Creates a real zip archive (PowerShell Compress-Archive on Windows, zip on Linux)." },
+    { "ali",     "ali <name> = <command>",        "Defines a session alias that persists to disk (per-user if logged in, global otherwise)." },
+    { "cali",    "cali [user]",                    "Clears aliases: yours with no argument, or a named user's (admin only, requires auth)." },
+    { "wipe",    "wipe",                           "Clears the terminal screen." },
+    { "dump",    "dump <variable>",                "Deletes a variable." },
+    { "me",      "me",                             "Shows who is currently logged in, or 'not logged in'." },
+    { "saves",   "saves <name>",                   "Saves every current variable to a named session file." },
+    { "loads",   "loads <name>",                   "Loads a saved session, replacing the entire current variable table." },
+    { "rr",      "rr <script.rsh>",                "Runs a .rsh script file from inside an already-running REPL session. Variables set by the script remain set afterward." },
+    { "run",     "run <program> [args...]",        "Launches an external program directly, handing control to the OS. Distinct from -default, which only applies to specific commands." },
+    { "regi",    "regi <user> <role>",             "Registers a new account. The very first account ever registered may claim admin; after that, regi may only create guest or member accounts." },
+    { "login",   "login <user>",                   "Logs in as a registered user (prompts for a password, not echoed)." },
+    { "logout",  "logout",                         "Ends the current login session without closing rush." },
+    { "promo",   "promo <user> <role>",            "Changes a user's role (admin only). An admin can never demote a different admin." },
+    { "demo",    "demo <user>",                    "Steps a user down exactly one role (admin only). Refuses to demote the only remaining admin." },
+    { "package", "package <verb> <args>",          "Runs a package-manager verb via the configured backend. Set the backend first with: package config = <backend>." },
+    { "lib",     "lib <verb> <args>",               "Runs a language package-manager verb via the configured backend. Set it first with: lib config = <backend>. Also: lib install req py/node." },
+    { "netch",   "netch <url>",                     "One-shot network check (resolve + connect)." },
+    { "monitor", "monitor <url> [seconds] [count]", "Repeated reachability checks, like ping. Omit count to run until Ctrl+C." },
+    { "launch",  "launch <name>",                    "Runs a registered launch target. Register one first with: launch config <name> = <path>." },
+    { "pause",   "pause",                             "Waits for Enter - useful as a breakpoint in scripts." },
+    { "sdown",   "sdown [-force]",                    "Shuts down the computer. Confirms first unless -force is given." },
+    { "frmt",    "frmt <drive> [fs] -force",          "Formats a drive (default filesystem: ntfs). Needs auth admin, -force, and retyping the drive name to confirm." },
+    { "partcre", "partcre <disk#> <size> -force",     "Creates a partition (size e.g. 50GB, or max)." },
+    { "partdel", "partdel <disk#> <part#> -force",    "Deletes a partition." },
+    { "partres", "partres <disk#> <part#> <size> -force", "Resizes a partition." },
+    { "auth",    "auth [tier] <command>",              "Runs a command at (or below) your logged-in role, or falls back to the configured default tier. Requires being logged in. Change the default with: auth config = <tier> (admin only)." },
+    { "loop",    "loop [n] ... end",                    "Repeats a block n times; omit n to loop until Ctrl+C or an inner quit/exit." },
+    { "if",      "if <a> <op> <b> ... end",              "Conditional block. Supports == != < > <= >= for ints, == != for strings." },
+    { "skipto",  "skipto <label> / label <name>",        "Forward-only jump to a label within the current block." },
+    { "exit",    "exit",                                 "Closes the rush terminal entirely." },
+    { "quit",    "quit",                                 "Stops the current script (inside a .rsh file), or ends interactive input at the top level." },
+};
+#define HELP_TABLE_COUNT (int)(sizeof(help_table) / sizeof(help_table[0]))
+
+ExecResult cmd_help(char **args, int argc) {
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
+
+    if (argc >= 2) {
+        char *name = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
+        for (int i = 0; i < HELP_TABLE_COUNT; i++) {
+            if (strcmp(help_table[i].name, name) == 0) {
+                printf("%s\n  %s\n", help_table[i].usage, help_table[i].detail);
+                free(name);
+                return r;
+            }
+        }
+        printf("no detailed help for \"%s\" yet - see 'help' for the full command list\n", name);
+        free(name);
+        return r;
+    }
+
     printf(
-        "rush 0.2 commands:\n"
+        "rush 0.3 commands:\n"
         "  show <value>              print a value\n"
         "  calc <a> <op> <b>         + - * / arithmetic\n"
         "  where                     print current directory\n"
@@ -839,14 +1175,18 @@ ExecResult cmd_help(void) {
         "  list [path]               list directory contents\n"
         "  read <file>               print a file's contents\n"
         "  about <target>            show details about a file/folder\n"
-        "  del <target>              delete a file or folder\n"
-        "  mkf <name>                make a folder\n"
-        "  mkfl <name>               make a file\n"
+        "  del <target> [-test]      delete a file or folder\n"
+        "  mkf <name> [-test]        make a folder\n"
+        "  mkfl <name> [-test]       make a file\n"
         "  write <file> <text>       append text to a file\n"
         "  owrite <file> <text>      overwrite a file's contents\n"
         "  time                      show the current time\n"
-        "  find <term>               search for a file\n"
+        "  find <term>               search for a file (by name)\n"
+        "  lookfor <term> <file>     search for text inside a file\n"
         "  rname <old> <new>         rename a file or folder\n"
+        "  cpy <src> <dst>           copy a file (-every for folders)\n"
+        "  mov <src> <dst>           move/rename a file or folder\n"
+        "  appn <src> <dst>          append one file's contents onto another\n"
         "  open <file> [-default]    interactive line editor (or OS default)\n"
         "  edit <file> <line> <text> replace one line, non-interactive\n"
         "  view <image.bmp/.ppm> [-default]  display in terminal (or OS default)\n"
@@ -864,7 +1204,7 @@ ExecResult cmd_help(void) {
         "  saves <name>              save current variables as a session\n"
         "  loads <name>              load a saved session\n"
         "  list sess / del sess <n>  list or delete saved sessions\n"
-        "  task <script.rsh>         run a script file\n"
+        "  rr <script.rsh>           run a script file\n"
         "  run <program> [args]      launch an external program\n"
         "  regi <user> <role>        register an account\n"
         "  login <user>              log in\n"
@@ -903,6 +1243,7 @@ ExecResult cmd_help(void) {
         "  cmd1 ; cmd2               run multiple commands on one line\n"
         "  exit / quit               leave rush / stop a script\n"
         "  flags: -test -force -every -silent -info -default\n"
+        "  help <command>            show detailed help for one command\n"
     );
     return r;
 }
@@ -1551,11 +1892,12 @@ ExecResult cmd_del_sess(char **args, int argc) {
     return r;
 }
 
-/* ---------- task: run an .rsh script file from within the REPL ---------- */
+/* ---------- rr (formerly 'task'): run an .rsh script file from within
+ * the REPL ---------- */
 #define MAX_TASK_LINES 4096
-ExecResult cmd_task(char **args, int argc) {
+ExecResult cmd_rr(char **args, int argc) {
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
-    if (argc < 2) { rush_error("task expects a script file"); r.ok = 1; return r; }
+    if (argc < 2) { rush_error("rr expects a script file"); r.ok = 1; return r; }
     char *path = is_quoted(args[1]) ? strip_quotes(args[1]) : strdup(args[1]);
     FILE *f = fopen(path, "r");
     if (!f) { rush_error("script %s not found", path); free(path); r.ok = 1; return r; }

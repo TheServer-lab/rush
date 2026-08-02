@@ -1,6 +1,6 @@
 # rush — Language Specification
 
-**Version:** 0.2
+**Version:** 0.3
 **Status:** Current
 **Platform:** Windows (console application)
 
@@ -413,12 +413,17 @@ quit                        # ends the whole script
 | `wipe`    | Clear the terminal screen                       |
 | `dump`    | Delete a variable                              |
 | `me`      | Show who is currently logged in (whoami)       |
-| `help`    | List available commands                        |
+| `help`    | List available commands, or `help <command>` for
+              detail on one                                    |
 | `saves`   | Save current variables as a session (§16)      |
 | `loads`   | Load a saved session (§16)                      |
 | `list sess` | List saved sessions (§16)                     |
 | `del sess`  | Delete a saved session (§16)                  |
-| `task`    | Run a `.rsh` script file from the REPL (§17)     |
+| `rr`      | Run a `.rsh` script file from the REPL (§17)     |
+| `lookfor` | Search inside a file's contents for a term       |
+| `cpy`     | Copy a file (`-every` for a whole folder)        |
+| `mov`     | Move/rename a file or folder                     |
+| `appn`    | Append one file's contents onto another          |
 | `run`     | Launch an external program (§17)                |
 | `regi`    | Register a new account                          |
 | `login`   | Log in as a registered user                     |
@@ -461,13 +466,13 @@ replaces it with the saved one (not a merge). Stored at:
 `list sess` and `del sess <name>` manage saved sessions, scoped the
 same way (per-user if logged in, global otherwise).
 
-## 17. Running Scripts and External Programs (`task`, `run`)
+## 17. Running Scripts and External Programs (`rr`, `run`)
 
-- **`task <script.rsh>`** runs a script file from inside an already-
-  running rush session, using the same interpreter that handles
-  `loop`/`if`/`skipto`/`label`/`start`/`quit` for `.rsh` files passed
-  as `rush.exe`'s command-line argument. Variables set by the script
-  remain set afterward, in the same session.
+- **`rr <script.rsh>`** (formerly named `task`) runs a script file from
+  inside an already-running rush session, using the same interpreter
+  that handles `loop`/`if`/`skipto`/`label`/`start`/`quit` for `.rsh`
+  files passed as `rush.exe`'s command-line argument. Variables set by
+  the script remain set afterward, in the same session.
 - **`run <program> [args...]`** launches an external program and
   hands control to the OS — unconditionally, with no rush-native
   alternative. This is a dedicated command distinct from `-default`
@@ -505,7 +510,8 @@ same way (per-user if logged in, global otherwise).
   label after a different block's `end`, or only within the same block
 - Whether pipes (`~`) work generally across all commands or only a
   defined subset
-- Copy/move commands (no current equivalent to `cp`/`mv`)
+- ~~Copy/move commands (no current equivalent to `cp`/`mv`)~~ —
+  resolved: `cpy`/`mov` (§21.1)
 - Whether `package config = winget`-style swappable OS backends
   generalize to other domains (`service`, `network`, etc.) or stay
   specific to `package`
@@ -581,6 +587,48 @@ tested; kept here as the authoritative design reference.
 - Format: `<username> <command> <timestamp>`
 - If nobody is logged in, the username field is `anonymous`.
 - Failed login attempts (wrong password) are also logged.
+
+## 20.1 File Copy, Move, Append, and Content Search (added in 0.3)
+
+**`cpy <src> <dst>`** copies a file. Copying a folder requires `-every`
+(recursively copies the whole tree); without it, `cpy` on a folder is
+an error. Refuses to overwrite an existing `<dst>` unless `-force` is
+given.
+
+**`mov <src> <dst>`** moves/renames a file or folder in place. It
+tries a plain rename first (fast, same filesystem/drive) and falls
+back to copy-then-delete if that fails, e.g. crossing filesystems.
+Moving a folder requires `-every`, matching `cpy`'s rule. Also refuses
+to overwrite an existing `<dst>` unless `-force` is given.
+
+**`appn <src> <dst>`** appends the entire contents of `<src>` onto the
+end of `<dst>`. This is distinct from `write <file> <text>`, which
+appends a single literal or variable value rather than an existing
+file's contents.
+
+**`lookfor <term> <file>`** searches inside a file's contents for
+`<term>` and prints matching lines; `-info` prefixes each match with
+its line number. This is rush's answer to `grep` — it complements
+`find`, which locates files by *name*, not by what's inside them.
+
+### 20.2 `-test` and `-silent` (wired in 0.3)
+
+As of 0.3, `-test` and `-silent` are wired on the
+file-mutating commands: `del`, `mkf`, `mkfl`, `write`, `owrite`,
+`rname`, `cpy`, `mov`, `appn`.
+
+- `-test` previews the action (`would delete x`, `would copy x to y`,
+  etc.) without performing it. The command's normal error checks
+  (e.g. "destination already exists") still run first, so a `-test`
+  preview reflects what would actually happen.
+- `-silent` suppresses the confirmation line a command prints on
+  success (`deleted x`, `copied x to y`, ...). It does not suppress
+  error output — a failed operation still reports its error even
+  under `-silent`.
+- Both flags may be combined with `-force`/`-every` as usual.
+- Not yet extended to every flag-accepting command (e.g. `pack`,
+  `sdown` accept `-test`/`-silent` without erroring, but don't change
+  behavior for them yet) — tracked as a follow-up, not an oversight.
 
 ## 21. Package Delegation (`package`)
 

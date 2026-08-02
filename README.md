@@ -1,4 +1,4 @@
-# rush — 0.2 reference build
+# rush — 0.3 reference build
 
 This is a working prototype of the rush interpreter described in
 `rush-spec-v0.1.md`. It was developed and tested on Linux, but is
@@ -44,12 +44,31 @@ from, so no new install is needed.
 - `calc` with `+ - * /`, loud type-mismatch errors
 - Pipes via `~` (only the final stage in a pipeline prints)
 - `show, calc, where, goin, list, read, about, del, mkf, mkfl, write,
-  owrite, time, find, rname, wait, bounce, pack, ali, dump, me, help,
-  saves, loads, task, run, auth, regi, login, logout, promo, demo,
-  package, exit, quit` — plus `del user`, `list user`, `list sess`,
-  `del sess` as domain-prefixed forms of `del`/`list`.
-- `help` lists every command; `me` shows who's logged in (or
-  `not logged in`); `dump <var>` deletes a variable.
+  owrite, time, find, lookfor, rname, cpy, mov, appn, wait, bounce,
+  pack, ali, dump, me, help, saves, loads, rr, run, auth, regi, login,
+  logout, promo, demo, package, exit, quit` — plus `del user`,
+  `list user`, `list sess`, `del sess` as domain-prefixed forms of
+  `del`/`list`.
+- `lookfor <term> <file>` searches inside a file's contents and prints
+  matching lines (`-info` prefixes each match with its line number).
+  This complements `find`, which locates files by *name* rather than
+  by what's inside them.
+- `cpy <src> <dst>` copies a file; add `-every` to copy a whole folder
+  tree. `mov <src> <dst>` renames/moves a file or folder in place,
+  falling back to copy+delete if a plain rename fails (e.g. across
+  drives/filesystems); `-every` is required to move a folder. Both
+  refuse to overwrite an existing destination unless `-force` is
+  given.
+- `appn <src> <dst>` appends one file's entire contents onto another.
+  This is distinct from `write`, which appends a single literal value
+  or variable rather than an existing file's contents.
+- `task` has been renamed to `rr` (still runs a `.rsh` script file from
+  inside a running REPL session).
+- `help` lists every command; `help <command>` shows that command's
+  full syntax plus a longer description (falls back to "no detailed
+  help for ... yet" for anything not yet in the detail table, rather
+  than erroring). `me` shows who's logged in (or `not logged in`);
+  `dump <var>` deletes a variable.
 - `bounce <url> [count]` — an optional count after the URL repeats the
   reachability test that many times, printing one numbered result
   line per attempt.
@@ -71,16 +90,25 @@ from, so no new install is needed.
   being logged in, and the typed tier can't exceed your account's
   role (typing *below* your own role is allowed as a deliberate,
   self-imposed restriction).
-- Flags: `-test` (not yet wired to any command's actual behavior),
-  `-force`, `-every`, `-silent` (not yet wired), `-info`, `-default`
+- Flags: `-test`, `-force`, `-every`, `-silent`, `-info`, `-default`
+- `-test` now previews the action instead of performing it, on `del`,
+  `mkf`, `mkfl`, `write`, `owrite`, `rname`, `cpy`, `mov`, and `appn`
+  (prints a `would ...` line and returns without touching the
+  filesystem).
+- `-silent` now suppresses the normal confirmation line these same
+  commands print on success (errors still print regardless of
+  `-silent`).
 - Loops (`loop N` / `end`), conditionals (`if a == 1` / `end`),
   forward-only `skipto <label>` / `label <name>`
 - `.rsh` script files (`start` is a no-op marker, `quit` stops the
   script, `exit` stops the whole program)
 
 ## Known gaps (documented, not hidden)
-- `-test` and `-silent` flags are recognized (won't error) but no
-  command changes behavior for them yet
+- `-test` and `-silent` are wired on the file-mutating commands
+  (`del`, `mkf`, `mkfl`, `write`, `owrite`, `rname`, `cpy`, `mov`,
+  `appn`) but not yet on every command that accepts them (e.g.
+  `pack`, `sdown`); those still accept the flags without error but
+  don't change behavior for them yet
 - `open`, `edit`, `dload`, `extr` are now real:
   - `open <file>` enters a small interactive line editor (`list`,
     `a <text>`, `d <n>`, `r <n> <text>`, `save`, `quit`);
@@ -108,9 +136,10 @@ from, so no new install is needed.
   currently set). Stored in `rush_data/user/<user>/sessions/<name>.txt`
   if logged in, or `rush_data/sessions/<name>.txt` if not. `list sess`
   and `del sess <name>` manage them.
-- `task <script.rsh>` runs a script file from inside a running REPL
+- `rr <script.rsh>` runs a script file from inside a running REPL
   session (previously scripts could only be run by passing the file
-  as rush.exe's command-line argument).
+  as rush.exe's command-line argument; this command was originally
+  named `task`).
 - `run <program> [args]` launches an external program directly and
   hands it to the OS - a dedicated, explicit escape hatch (distinct
   from `-default`, which only applies to specific commands).

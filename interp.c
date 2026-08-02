@@ -13,11 +13,11 @@ static int is_known_command(const char *word) {
         "auth","regi","login","logout","promo","demo","help","me","dump",
         "show","calc","where","goin","list","read","about","del","mkf",
         "mkfl","write","owrite","time","find","rname","wait","bounce",
-        "pack","ali","cali","saves","loads","task","run","package","lib",
+        "pack","ali","cali","saves","loads","rr","run","package","lib",
         "netch","monitor","launch","config","kill","pause","sdown",
         "frmt","partcre","partdel","partres","open",
         "edit","view","dload","extr","exit","quit","loop","if","skipto","label",
-        "end","start", NULL
+        "end","start","cpy","mov","appn","lookfor", NULL
     };
     for (int i = 0; names[i]; i++) if (strcmp(word, names[i]) == 0) return 1;
     if (alias_find(word)) return 1;
@@ -126,7 +126,7 @@ static ExecResult dispatch(TokenList *tl, Value *piped) {
     if (strcmp(cmd, "login") == 0)  return cmd_login(tl);
     if (strcmp(cmd, "logout") == 0) return cmd_logout(tl);
     if (strcmp(cmd, "promo") == 0)  return cmd_promo(tl);
-    if (strcmp(cmd, "help") == 0)   return cmd_help();
+    if (strcmp(cmd, "help") == 0)   return cmd_help(args, argc);
     if (strcmp(cmd, "me") == 0)     return cmd_me();
     if (strcmp(cmd, "dump") == 0)   return cmd_dump(args, argc);
     if (strcmp(cmd, "package") == 0) return cmd_package(tl);
@@ -184,20 +184,24 @@ static ExecResult dispatch(TokenList *tl, Value *piped) {
         }
         return cmd_del(args, argc, tl, piped);
     }
-    if (strcmp(cmd, "mkf") == 0)   return cmd_mkf(args, argc, piped);
-    if (strcmp(cmd, "mkfl") == 0)  return cmd_mkfl(args, argc, piped);
-    if (strcmp(cmd, "write") == 0) return cmd_write(args, argc, piped);
-    if (strcmp(cmd, "owrite") == 0) return cmd_owrite(args, argc, piped);
+    if (strcmp(cmd, "mkf") == 0)   return cmd_mkf(args, argc, tl, piped);
+    if (strcmp(cmd, "mkfl") == 0)  return cmd_mkfl(args, argc, tl, piped);
+    if (strcmp(cmd, "write") == 0) return cmd_write(args, argc, tl, piped);
+    if (strcmp(cmd, "owrite") == 0) return cmd_owrite(args, argc, tl, piped);
     if (strcmp(cmd, "time") == 0)  return cmd_time(args, argc, piped);
     if (strcmp(cmd, "find") == 0)  return cmd_find(args, argc, tl, piped);
-    if (strcmp(cmd, "rname") == 0) return cmd_rname(args, argc, piped);
+    if (strcmp(cmd, "lookfor") == 0) return cmd_lookfor(args, argc, tl, piped);
+    if (strcmp(cmd, "rname") == 0) return cmd_rname(args, argc, tl, piped);
+    if (strcmp(cmd, "cpy") == 0)   return cmd_cpy(args, argc, tl, piped);
+    if (strcmp(cmd, "mov") == 0)   return cmd_mov(args, argc, tl, piped);
+    if (strcmp(cmd, "appn") == 0)  return cmd_appn(args, argc, tl, piped);
     if (strcmp(cmd, "wait") == 0)  return cmd_wait(args, argc, piped);
     if (strcmp(cmd, "bounce") == 0) return cmd_bounce(args, argc, piped);
     if (strcmp(cmd, "pack") == 0)  return cmd_pack(args, argc, tl);
     if (strcmp(cmd, "demo") == 0)  return cmd_demo(args, argc);
     if (strcmp(cmd, "saves") == 0) return cmd_saves(args, argc);
     if (strcmp(cmd, "loads") == 0) return cmd_loads(args, argc);
-    if (strcmp(cmd, "task") == 0)  return cmd_task(args, argc);
+    if (strcmp(cmd, "rr") == 0)  return cmd_rr(args, argc);
     if (strcmp(cmd, "run") == 0)   return cmd_run(tl);
     if (strcmp(cmd, "cali") == 0)  return cmd_cali(args, argc);
     if (strcmp(cmd, "wipe") == 0)  return cmd_wipe();
