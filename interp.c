@@ -11,7 +11,7 @@ int g_script_stop = 0;
 static int is_known_command(const char *word) {
     static const char *names[] = {
         "auth","regi","login","logout","promo","demo","help","me","dump",
-        "show","calc","where","goin","list","read","about","del","mkf",
+        "show","calc","cur","cf","list","read","about","del","mkf",
         "mkfl","write","owrite","time","find","rname","wait","bounce",
         "pack","ali","cali","saves","loads","rr","run","package","lib",
         "netch","monitor","launch","config","kill","pause","sdown",
@@ -149,8 +149,8 @@ static ExecResult dispatch(TokenList *tl, Value *piped) {
     }
     if (strcmp(cmd, "show") == 0)  return cmd_show(args, argc, piped);
     if (strcmp(cmd, "calc") == 0)  return cmd_calc(args, argc, piped);
-    if (strcmp(cmd, "where") == 0) return cmd_where(args, argc, piped);
-    if (strcmp(cmd, "goin") == 0)  return cmd_goin(args, argc, piped);
+    if (strcmp(cmd, "cur") == 0) return cmd_cur(args, argc, piped);
+    if (strcmp(cmd, "cf") == 0)  return cmd_cf(args, argc, piped);
     if (strcmp(cmd, "list") == 0) {
         if (tl->count >= 2 && strcmp(tl->tokens[1], "user") == 0) return cmd_list_user();
         if (tl->count >= 2 && strcmp(tl->tokens[1], "sess") == 0) return cmd_list_sess();
@@ -261,6 +261,23 @@ static ExecResult dispatch(TokenList *tl, Value *piped) {
  * pipelines the remaining stages with '~'. */
 /* split a line into statements on top-level ';' (not inside quotes) */
 static int split_statements(const char *line, char stmts[][RUSH_MAX_LINE], int max_stmts) {
+    /* 'ali <name> = <command...>' captures everything after the '='
+     * verbatim as the alias's expansion - including any ';' - since
+     * those are meant to become part of what the alias itself runs
+     * (a chained sequence), not top-level statement separators for
+     * *this* line. Detect that up front and skip ';' splitting
+     * entirely for such a line. */
+    {
+        const char *p = line;
+        while (isspace((unsigned char)*p)) p++;
+        if (strncmp(p, "ali", 3) == 0 && isspace((unsigned char)p[3])) {
+            size_t len = strlen(line);
+            if (len >= RUSH_MAX_LINE) len = RUSH_MAX_LINE - 1;
+            memcpy(stmts[0], line, len);
+            stmts[0][len] = '\0';
+            return 1;
+        }
+    }
     int n = 0;
     int in_quotes = 0;
     size_t start = 0;

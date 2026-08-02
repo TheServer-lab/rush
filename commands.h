@@ -7,8 +7,8 @@ Value resolve_operand(const char *tok, int *err);
 
 ExecResult cmd_show(char **args, int argc, Value *piped);
 ExecResult cmd_calc(char **args, int argc, Value *piped);
-ExecResult cmd_where(char **args, int argc, Value *piped);
-ExecResult cmd_goin(char **args, int argc, Value *piped);
+ExecResult cmd_cur(char **args, int argc, Value *piped);
+ExecResult cmd_cf(char **args, int argc, Value *piped);
 ExecResult cmd_list(char **args, int argc, TokenList *tl, Value *piped);
 ExecResult cmd_read(char **args, int argc, Value *piped);
 ExecResult cmd_about(char **args, int argc, Value *piped);

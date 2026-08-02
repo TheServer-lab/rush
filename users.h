@@ -8,7 +8,7 @@
 extern char g_current_user[RUSH_MAX_USERNAME];
 extern char g_current_role[RUSH_MAX_ROLE];
 
-/* Captured once at program start, before any 'goin' can move the
+/* Captured once at program start, before any 'cf' can move the
  * working directory - rush_data always lives relative to here. */
 extern char g_start_dir[1024];
 

@@ -161,6 +161,22 @@ runs independently, in order. The line's overall result (for
 assignment or further piping) is whichever the *last* statement
 produced.
 
+**Interaction with `ali` (fixed in 0.3):** a line starting with `ali`
+is never split on `;` at the top level - everything after `ali <name>
+=` is captured verbatim as that alias's stored expansion, `;` included.
+This lets an alias itself be a chained sequence:
+
+```
+ali stream = launch obs ; launch btd6
+stream          # runs both, in order, exactly like typing
+                # "launch obs ; launch btd6" directly
+```
+
+Previously the top-level `;` split happened before `ali` ever saw the
+line, so `ali stream = launch obs` and `launch btd6` were parsed (and
+run) as two separate statements - the second command fired
+immediately instead of becoming part of the alias.
+
 ## 9. Network (`bounce`)
 
 ```
@@ -364,7 +380,7 @@ it in plain language — no bare exit codes, no unexplained failures.
 
 ```
 start                       # begins script execution
-goin c:/Downloads/
+cf c:/Downloads/
 dload file.zip
 dload file1.7z
 extr "file" "file1"
@@ -384,10 +400,12 @@ quit                        # ends the whole script
 |-----------|-----------------------------------------------|
 | `show`    | Print text (Unix: `echo`)                     |
 | `list`    | List directory contents (Unix: `ls`)          |
-| `where`   | Print current directory (Unix: `pwd`)         |
-| `goin`    | Change directory (Unix: `cd`); `goin home`
+| `cur`     | Print current directory (Unix: `pwd`); renamed
+              from `where` in 0.3                            |
+| `cf`      | Change directory (Unix: `cd`); `cf home`
               jumps to the OS home directory - quoting it
-              (`goin "home"`) means a literal folder instead |
+              (`cf "home"`) means a literal folder instead.
+              Renamed from `goin` in 0.3.                    |
 | `del`     | Delete a file or folder                       |
 | `mkf`     | Make a folder                                 |
 | `mkfl`    | Make a file                                   |
@@ -550,7 +568,7 @@ tested; kept here as the authoritative design reference.
 
 **Storage**
 - `rush_data/users.txt`, created relative to wherever `rush.exe` was
-  launched from (captured once at startup, so `goin` moving the
+  launched from (captured once at startup, so `cf` moving the
   working directory afterward doesn't relocate it).
 - One line per user: `username:role:salt:hash`
   - `hash` is SHA-256.

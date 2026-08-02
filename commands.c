@@ -145,8 +145,8 @@ ExecResult cmd_calc(char **args, int argc, Value *piped) {
     return r;
 }
 
-/* ---------- where / goin ---------- */
-ExecResult cmd_where(char **args, int argc, Value *piped) {
+/* ---------- cur / cf ---------- */
+ExecResult cmd_cur(char **args, int argc, Value *piped) {
     (void)args; (void)argc; (void)piped;
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
     char buf[RUSH_MAX_LINE];
@@ -154,10 +154,10 @@ ExecResult cmd_where(char **args, int argc, Value *piped) {
     return r;
 }
 
-ExecResult cmd_goin(char **args, int argc, Value *piped) {
+ExecResult cmd_cf(char **args, int argc, Value *piped) {
     (void)piped;
     ExecResult r = {0, {VAL_INT,0,NULL}, 0};
-    if (argc < 2) { rush_error("goin expects a path"); r.ok = 1; return r; }
+    if (argc < 2) { rush_error("cf expects a path"); r.ok = 1; return r; }
 
     char *path;
     if (!is_quoted(args[1]) && strcmp(args[1], "home") == 0) {
@@ -1090,8 +1090,8 @@ typedef struct {
 static const HelpEntry help_table[] = {
     { "show",    "show <value>",              "Prints a value: a variable, a quoted string (with {name} interpolation), or an int literal." },
     { "calc",    "calc <a> <op> <b>",          "Integer arithmetic with + - * /. Mixing int and string is an error. Capture the result with a = calc ...." },
-    { "where",   "where",                     "Prints the current directory." },
-    { "goin",    "goin <path>",                "Changes the current directory." },
+    { "cur",     "cur",                        "Prints the current directory." },
+    { "cf",      "cf <path>",                 "Changes the current directory. cf home goes to the user's home directory; cf \"home\" (quoted) means a literal folder named home instead." },
     { "list",    "list [path]",                "Lists directory contents. See also: list user, list sess, list pros, list dsk, list lab, list part <disk#>." },
     { "read",    "read <file>",                "Prints a file's contents to the screen." },
     { "about",   "about <target>",             "Shows name, type, size, and last-modified time; folders also get an item count, files get a line count and (non-Windows) permissions." },
@@ -1170,8 +1170,8 @@ ExecResult cmd_help(char **args, int argc) {
         "rush 0.3 commands:\n"
         "  show <value>              print a value\n"
         "  calc <a> <op> <b>         + - * / arithmetic\n"
-        "  where                     print current directory\n"
-        "  goin <path>               change directory\n"
+        "  cur                       print current directory\n"
+        "  cf <path>                 change directory\n"
         "  list [path]               list directory contents\n"
         "  read <file>               print a file's contents\n"
         "  about <target>            show details about a file/folder\n"

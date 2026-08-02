@@ -43,7 +43,7 @@ from, so no new install is needed.
 - Variables (`int`/`string`), bare-word lookup, `{name}` interpolation
 - `calc` with `+ - * /`, loud type-mismatch errors
 - Pipes via `~` (only the final stage in a pipeline prints)
-- `show, calc, where, goin, list, read, about, del, mkf, mkfl, write,
+- `show, calc, cur, cf, list, read, about, del, mkf, mkfl, write,
   owrite, time, find, lookfor, rname, cpy, mov, appn, wait, bounce,
   pack, ali, dump, me, help, saves, loads, rr, run, auth, regi, login,
   logout, promo, demo, package, exit, quit` — plus `del user`,
@@ -82,7 +82,8 @@ from, so no new install is needed.
 - Accounts: `regi <user> <role>`, `login <user>`, `logout`,
   `promo <user> <role>` (admin-only). Passwords are salted SHA-256,
   stored in `rush_data/users.txt` (created next to wherever rush was
-  launched from — captured once at startup, so `goin` won't move it).
+  launched from — captured once at startup, so `cf` won't move it).
+  (`goin` was renamed to `cf` in 0.3.)
   Every command is logged to `rush_data/log.txt` as
   `<user or "anonymous"> <command> <timestamp>`, including failed
   login attempts.
